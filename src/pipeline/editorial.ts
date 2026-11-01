@@ -34,7 +34,9 @@ export const textSchema = z.object({ text: z.string().min(1) });
 export function postDecision(p: ProjectRow, cfg: Config): { ok: true; update: boolean } | { ok: false; reason: string } {
   const s = json<Scan | null>(p.scan, null);
   if (!s) return { ok: false, reason: "no scan" };
-  if (s.status !== "publish_post") return { ok: false, reason: `status ${s.status}` };
+  // `skip` / `needs_check` are vetoes. Between post and digest the score decides: the model often scored 5 and
+  // still said `digest_only` after the threshold was lowered to 5 (2026-11-01).
+  if (s.status !== "publish_post" && s.status !== "digest_only") return { ok: false, reason: `status ${s.status}` };
   const v = s.velocity;
   const strong = s.hype_score >= cfg.POST_THRESHOLD;
   const early = s.hype_score >= cfg.EARLY_POST_THRESHOLD && s.stage === "ранний сигнал" && !!v && isAnomalous(v, cfg);

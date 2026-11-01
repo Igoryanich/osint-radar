@@ -142,7 +142,9 @@ test("post thresholds are enforced in code, not by the model's word", () => {
   assert.equal(postDecision(row({ hype_score: 6, stage: "ранний сигнал" }), cfg).ok, false);
   assert.equal(postDecision(row({ hype_score: 6, stage: "ранний сигнал" }, fast), cfg).ok, true);
   assert.equal(postDecision(row({ hype_score: 6, stage: "взлетает" }, fast), cfg).ok, false);
-  assert.equal(postDecision(row({ hype_score: 9, status: "digest_only" }), cfg).ok, false);
+  assert.equal(postDecision(row({ hype_score: 9, status: "digest_only" }), cfg).ok, true, "score decides between post and digest");
+  assert.equal(postDecision(row({ hype_score: 9, status: "skip" }), cfg).ok, false, "skip is a veto");
+  assert.equal(postDecision(row({ hype_score: 9, status: "needs_check" }), cfg).ok, false, "needs_check is a veto");
   assert.equal(postDecision(row({ hype_score: 8 }, slow, { post_count: 1 }), cfg).ok, false, "repeat without news");
   assert.deepEqual(postDecision(row({ hype_score: 8, is_update: true }, slow, { post_count: 1 }), cfg), { ok: true, update: true });
 });

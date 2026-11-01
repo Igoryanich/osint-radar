@@ -119,8 +119,9 @@ export async function collectAll(db: Db, cfg: Config, only: string[] = []) {
   return stats;
 }
 
-// 7 s still drew 429 for 10 of 14 subreddits from Actions (2026-11-01).
-const HOST_PAUSE_MS: Record<string, number> = { "www.reddit.com": 12000, "reddit.com": 12000 };
+// Reddit allows only a few anonymous requests from an Actions IP: even the second of two combined requests
+// drew 429 at 12 s (2026-11-01).
+const HOST_PAUSE_MS: Record<string, number> = { "www.reddit.com": 30000, "reddit.com": 30000 };
 
 function hostOf(url: string): string {
   try {
