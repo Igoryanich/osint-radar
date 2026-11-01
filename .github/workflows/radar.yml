@@ -14,6 +14,12 @@ on:
   schedule:
     - cron: "12 * * * *"
   workflow_dispatch:
+    inputs:
+      task:
+        description: "cycle = the usual hourly run; digest-now = build and send today's digest right away"
+        type: choice
+        options: [cycle, digest-now]
+        default: cycle
 
 concurrency:
   group: radar-state   # one writer to the state branch at a time
@@ -59,7 +65,13 @@ jobs:
           fi
 
       - name: Cycle
+        if: inputs.task != 'digest-now'
         run: node src/cli.ts cycle
+
+      # A digest sent this way counts as today's: the evening run will not send a second one.
+      - name: Digest now
+        if: inputs.task == 'digest-now'
+        run: node src/cli.ts digest && node src/cli.ts publish
 
       - name: Latest texts (log)
         if: always()
