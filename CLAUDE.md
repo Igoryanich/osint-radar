@@ -65,4 +65,5 @@ Differences from vibe-radar:
   `POST_THRESHOLD` 5 and up to 16 posts/day (at 7 only 1 of 44 candidates qualified). The prompt reads the
   thresholds from config (`{{POST_THRESHOLD}}` etc.), so change them in one place.
 - Bumping `SCAN_VERSION` makes `buildCandidates` redo older verdicts, bypassing the rescan throttles.
-- Reddit: subreddits are combined per request (`r/a+b+c`) — separate requests from Actions draw 429.
+- Reddit: subreddits are combined per request (`r/a+b+c`) and only one Reddit source is fetched per run
+  (`HOST_SOURCES_PER_RUN`, least recently fetched first) — a second request from an Actions IP draws 429.

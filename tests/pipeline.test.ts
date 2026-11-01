@@ -5,7 +5,7 @@ import { loadConfig } from "../src/config.ts";
 import { Db } from "../src/db.ts";
 import type { Llm } from "../src/llm.ts";
 import { buildCandidates } from "../src/pipeline/candidates.ts";
-import { storeItem } from "../src/pipeline/collect.ts";
+import { collectAll, storeItem } from "../src/pipeline/collect.ts";
 import { maybeDigest } from "../src/pipeline/digest.ts";
 import { postDecision, queuePosts, type ProjectRow, updateAllowed } from "../src/pipeline/editorial.ts";
 import { applyScan, type Candidate } from "../src/pipeline/scan.ts";
@@ -119,6 +119,25 @@ test("stories: an on-topic thread or a guide from a standalone source is a candi
     "story:bellingcat.com/resources/2026/10/22/shadow-guide",
     "story:reddit.com/r/OSINT/comments/abc/geolocating_by_power_lines",
   ]);
+});
+
+test("collectAll: Reddit sources take turns, one request per run", async () => {
+  const db = new Db(":memory:");
+  for (const k of ["r-a", "r-b"])
+    db.run("INSERT INTO sources(key, name, kind, platform, url, focused, created_at) VALUES(?,?,?,?,?,?,?)", k, k, "reddit", "reddit", `https://www.reddit.com/r/${k}/top.json`, 1, ago(0));
+  const realFetch = globalThis.fetch;
+  const asked: string[] = [];
+  globalThis.fetch = (async (u: string) => {
+    asked.push(String(u));
+    return new Response('{"data":{"children":[]}}', { status: 200 });
+  }) as typeof fetch;
+  try {
+    await collectAll(db, cfg);
+    await collectAll(db, cfg);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.deepEqual(asked.map((u) => new URL(u).pathname), ["/r/r-a/top.json", "/r/r-b/top.json"]);
 });
 
 test("scan verdicts are applied; merges follow the primary key; rescan is throttled", () => {

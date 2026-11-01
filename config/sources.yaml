@@ -59,7 +59,8 @@ sources:
 
   # ── Reddit (top of the day; JSON with upvotes, RSS fallback) ───────────────────────────
   # Several subreddits per request (r/a+b+c): anonymous access from Actions draws 429 after a few requests,
-  # one request per subreddit failed for 5 of 8 even 12 s apart (2026-11-01).
+  # one request per subreddit failed for 5 of 8 even 12 s apart, and even the second of two combined requests
+  # drew 429 at 30 s (2026-11-01). So one request per run: these two sources alternate hourly.
   - { key: r-osint-multi, name: "r/OSINT + osinttools + TraceLabs + GEOINT + threatintel", kind: reddit, platform: reddit, url: "https://www.reddit.com/r/OSINT+osinttools+TraceLabs+GEOINT+threatintel/top.json?t=day&limit=100", focused: true }
   - { key: r-security-multi, name: "r/cybersecurity + netsec + privacy + opsec + ADSB + RTLSDR + RBI + DataHoarder + geoguessr", kind: reddit, platform: reddit, url: "https://www.reddit.com/r/cybersecurity+netsec+privacy+opsec+ADSB+RTLSDR+RBI+DataHoarder+geoguessr/top.json?t=day&limit=100" }
 

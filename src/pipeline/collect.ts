@@ -88,6 +88,15 @@ export async function collectAll(db: Db, cfg: Config, only: string[] = []) {
     const h = hostOf(s.url);
     byHost.set(h, [...(byHost.get(h) ?? []), s]);
   }
+  // Hosts that serve only a few requests per run take turns: the least recently fetched sources go first.
+  if (!only.length) {
+    const lastFetch = new Map(db.all<{ id: number; at: string | null }>("SELECT id, last_fetch_at AS at FROM sources").map((r) => [r.id, r.at ?? ""]));
+    for (const [host, limit] of Object.entries(HOST_SOURCES_PER_RUN)) {
+      const group = byHost.get(host);
+      if (group) byHost.set(host, [...group].sort((a, b) => (lastFetch.get(a.id) ?? "").localeCompare(lastFetch.get(b.id) ?? "")).slice(0, limit));
+    }
+    stats.sources = [...byHost.values()].reduce((n, g) => n + g.length, 0);
+  }
   await Promise.all(
     [...byHost.entries()].map(async ([host, group]) => {
       for (const [i, src] of group.entries()) {
@@ -122,6 +131,8 @@ export async function collectAll(db: Db, cfg: Config, only: string[] = []) {
 // Reddit allows only a few anonymous requests from an Actions IP: even the second of two combined requests
 // drew 429 at 12 s (2026-11-01).
 const HOST_PAUSE_MS: Record<string, number> = { "www.reddit.com": 30000, "reddit.com": 30000 };
+// …so Reddit gets one (combined, multi-subreddit) request per run, alternating between its sources.
+const HOST_SOURCES_PER_RUN: Record<string, number> = { "www.reddit.com": 1 };
 
 function hostOf(url: string): string {
   try {
