@@ -107,9 +107,10 @@ export const redditCollector: Collector = {
       // Reddit often refuses JSON to datacenter IPs but still serves RSS (no counters — coverage signal only).
       const rss = source.url.replace(/\/(top|hot|new)\.json/, "/$1/.rss");
       if (rss === source.url) throw e;
-      await new Promise((r) => setTimeout(r, 4000));
+      // After a 429 an immediate second request is refused too; give the anonymous limit time to recover.
+      await new Promise((r) => setTimeout(r, /429/.test(String(e)) ? 15_000 : 4000));
       const { text } = await fetchText(rss);
-      return parseFeed(text, 30);
+      return parseFeed(text, 100);
     }
   },
 };

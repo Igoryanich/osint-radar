@@ -4,6 +4,8 @@ import { type Db, json } from "../db.ts";
 import { growthRatio, itemDeltas, projectHeadline } from "../metrics.ts";
 import { nameMentioned, projectKeyOf } from "../projects.ts";
 import { hoursAgo } from "../util.ts";
+// Circular with scan.ts, which is fine: SCAN_VERSION is only read when buildCandidates runs.
+import { SCAN_VERSION } from "./scan.ts";
 
 interface ItemRow {
   id: number;
@@ -78,8 +80,10 @@ export function buildCandidates(db: Db, cfg: Config): ProjectInput[] {
   const projects = db.all<{
     key: string; url: string; last_scan_at: string | null; last_scan_metrics: string | null; hype_score: number | null;
     stage: string | null; status: string; post_count: number; last_post_at: string | null; published_metrics: string | null;
+    scan_version: number | null;
   }>(
-    `SELECT key, url, last_scan_at, last_scan_metrics, hype_score, stage, status, post_count, last_post_at, published_metrics
+    `SELECT key, url, last_scan_at, last_scan_metrics, hype_score, stage, status, post_count, last_post_at, published_metrics,
+       json_extract(scan, '$.version') AS scan_version
      FROM projects WHERE merged_into IS NULL AND last_seen >= ?`,
     since,
   );
@@ -144,10 +148,12 @@ export function buildCandidates(db: Db, cfg: Config): ProjectInput[] {
       }
     }
     const headline = projectHeadline(db, p.key);
+    // A verdict from an older scan prompt (other scale or thresholds) is redone regardless of the throttles below.
+    const stale = p.last_scan_at !== null && (p.scan_version ?? 0) < SCAN_VERSION;
     // Rescan throttle: a project already judged recently is shown again only if it grew noticeably.
-    if (p.last_scan_at && p.last_scan_at >= hoursAgo(cfg.RESCAN_HOURS) && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.RESCAN_GROWTH)
+    if (!stale && p.last_scan_at && p.last_scan_at >= hoursAgo(cfg.RESCAN_HOURS) && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.RESCAN_GROWTH)
       continue;
-    if (p.status === "skip" && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.UPDATE_GROWTH) continue;
+    if (!stale && p.status === "skip" && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.UPDATE_GROWTH) continue;
     // A fresh guide or investigation from a curated OSINT source has no counters but deserves a look.
     const pre = preScore(v) + (story && items.some((i) => i.source === "blog") ? 1 : 0);
     if (pre < 1) continue;

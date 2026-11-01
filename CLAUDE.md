@@ -61,4 +61,8 @@ Differences from vibe-radar:
 - New source: add to `config/sources.yaml`, check it with `node src/cli.ts collect <key>` + `sources`. Quote any
   `name` containing ` #` (YAML comment). Reddit cannot be checked from a home IP (403/429) — only from Actions.
 - Thresholds (`ANOMALY_*`, `preScore` divisors) are first guesses for the OSINT niche (2026-11-01); recalibrate
-  from a week of real data, not from intuition.
+  from a week of real data, not from intuition. The owner wants a steady practitioner's feed, not only viral hits:
+  `POST_THRESHOLD` 5 and up to 16 posts/day (at 7 only 1 of 44 candidates qualified). The prompt reads the
+  thresholds from config (`{{POST_THRESHOLD}}` etc.), so change them in one place.
+- Bumping `SCAN_VERSION` makes `buildCandidates` redo older verdicts, bypassing the rescan throttles.
+- Reddit: subreddits are combined per request (`r/a+b+c`) — separate requests from Actions draw 429.

@@ -65,8 +65,10 @@ const schema = z.object({
   // A project is rescanned at most this often unless its metrics grew ≥ RESCAN_GROWTH×.
   RESCAN_HOURS: int(6),
   RESCAN_GROWTH: num(1.5),
-  POST_THRESHOLD: int(7),
-  EARLY_POST_THRESHOLD: int(6),
+  // A practitioner's feed, not a viral-hype channel: a new useful tool/method/investigation (5) gets a post.
+  // At 7 only one of 44 judged candidates qualified on the first day (2026-11-01).
+  POST_THRESHOLD: int(5),
+  EARLY_POST_THRESHOLD: int(4),
   DIGEST_THRESHOLD: int(4),
   // "Anomalous velocity" (verified from collected metrics) that lets a 6/early-signal project get its own post.
   ANOMALY_STARS_24H: int(300),
@@ -76,8 +78,8 @@ const schema = z.object({
   // A repeat post needs ≥ this growth of the main metric since the previous post (or a non-metric news + cooldown).
   UPDATE_GROWTH: num(3),
   UPDATE_COOLDOWN_HOURS: int(48),
-  MAX_POSTS_PER_RUN: int(2),
-  MAX_POSTS_PER_DAY: int(6),
+  MAX_POSTS_PER_RUN: int(3),
+  MAX_POSTS_PER_DAY: int(16),
   POST_MAX_CHARS: int(1800),
   DIGEST_MAX_CHARS: int(3600),
   DIGEST_MIN_ITEMS: int(3),

@@ -7,14 +7,12 @@
 # config.standalone — true = an article that links to no repo/site is a story of its own (a technique guide,
 #             an investigation). Reddit and HN threads are always eligible. Other blogs/press only attach as mentions.
 #
-# Every URL below answered with fresh items on 2026-11-01 (Reddit: the same collector works from GitHub Actions
-# in vibe-radar; a home IP gets 403/429 from Reddit). Not collected (no free, stable API): X/Twitter, Discord,
+# Every URL below answered with fresh items on 2026-11-01 (Reddit: checked from GitHub Actions only —
+# a home IP gets 403/429). Not collected (no free, stable API): X/Twitter, Discord,
 # YouTube view counts.
 # Dropped after checking: gijn.org, trace-labs.com, hackers-arise.com (403), osintcurio.us, osintcombine.com (no feed),
 # infosec.exchange tag feeds (empty to anonymous readers), sector035.nl (no posts since 2024),
 # maltego.com (4 MB feed), restofworld.org (malformed XML), secjuice.com and unishka.substack.com (403 from Actions).
-# Reddit is capped at 8 subreddits: anonymous access draws 429 beyond that (r/netsec, r/opsec, r/RTLSDR, r/geoguessr,
-# r/RBI, r/DataHoarder dropped on 2026-11-01).
 
 sources:
   # ── GitHub: the earliest and best-measured signal for tools ───────────────────────────
@@ -59,15 +57,11 @@ sources:
   - { key: hn-q-satellite, name: HN search «satellite imagery», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=satellite%20imagery&tags=story", config: { min_points: 10 } }
   - { key: hn-q-tracking, name: HN search «flight tracking», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=flight%20tracking&tags=story", config: { min_points: 10 } }
 
-  # ── Reddit (top of the day; JSON with upvotes, RSS fallback; one request per 7 s) ──────
-  - { key: r-osint, name: r/OSINT, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/OSINT/top.json?t=day&limit=30", focused: true }
-  - { key: r-osinttools, name: r/osinttools, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/osinttools/top.json?t=day&limit=30", focused: true }
-  - { key: r-tracelabs, name: r/TraceLabs, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/TraceLabs/top.json?t=day&limit=30", focused: true }
-  - { key: r-geoint, name: r/GEOINT, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/GEOINT/top.json?t=day&limit=30", focused: true }
-  - { key: r-threatintel, name: r/threatintel, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/threatintel/top.json?t=day&limit=30", focused: true }
-  - { key: r-cybersecurity, name: r/cybersecurity, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/cybersecurity/top.json?t=day&limit=30" }
-  - { key: r-privacy, name: r/privacy, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/privacy/top.json?t=day&limit=30" }
-  - { key: r-adsb, name: r/ADSB, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/ADSB/top.json?t=day&limit=30" }
+  # ── Reddit (top of the day; JSON with upvotes, RSS fallback) ───────────────────────────
+  # Several subreddits per request (r/a+b+c): anonymous access from Actions draws 429 after a few requests,
+  # one request per subreddit failed for 5 of 8 even 12 s apart (2026-11-01).
+  - { key: r-osint-multi, name: "r/OSINT + osinttools + TraceLabs + GEOINT + threatintel", kind: reddit, platform: reddit, url: "https://www.reddit.com/r/OSINT+osinttools+TraceLabs+GEOINT+threatintel/top.json?t=day&limit=100", focused: true }
+  - { key: r-security-multi, name: "r/cybersecurity + netsec + privacy + opsec + ADSB + RTLSDR + RBI + DataHoarder + geoguessr", kind: reddit, platform: reddit, url: "https://www.reddit.com/r/cybersecurity+netsec+privacy+opsec+ADSB+RTLSDR+RBI+DataHoarder+geoguessr/top.json?t=day&limit=100" }
 
   # ── OSINT guides and investigations (stories of their own) ─────────────────────────────
   - { key: bellingcat, name: Bellingcat, kind: rss, platform: blog, url: "https://www.bellingcat.com/feed/", focused: true, config: { standalone: true } }

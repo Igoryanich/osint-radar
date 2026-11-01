@@ -20,6 +20,9 @@ const cfg = loadConfig({
   TELEGRAM_CHANNEL_ID: "@osint_radar",
   DIGEST_MIN_ITEMS: "1",
   LLM_MIN_INTERVAL_MS: "0",
+  // The threshold logic tests below were written against these values.
+  POST_THRESHOLD: "7",
+  EARLY_POST_THRESHOLD: "6",
 });
 
 function setup() {
