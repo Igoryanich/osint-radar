@@ -153,8 +153,8 @@ export async function queuePosts(db: Db, llm: Llm, cfg: Config) {
   if (room <= 0) return stats;
   const rows = db.all<ProjectRow>(
     `SELECT id, key, name, url, scan, hype_score, stage, status, post_count, last_post_at, last_post_message_id, published_metrics
-     FROM projects WHERE merged_into IS NULL AND status = 'publish_post' AND last_scan_at >= ? ORDER BY hype_score DESC, last_scan_at DESC`,
-    hoursAgo(cfg.RESCAN_HOURS),
+     FROM projects WHERE merged_into IS NULL AND status IN ('publish_post','digest_only') AND hype_score >= ? AND last_scan_at >= ? ORDER BY hype_score DESC, last_scan_at DESC`,
+    Math.min(cfg.POST_THRESHOLD, cfg.EARLY_POST_THRESHOLD), hoursAgo(cfg.RESCAN_HOURS),
   );
   const channel = cfg.DRY_RUN ? "dry-run" : cfg.TELEGRAM_CHANNEL_ID;
   for (const p of rows) {
