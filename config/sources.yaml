@@ -1,0 +1,167 @@
+# Source registry. Edit freely: the file is synced into the DB on every run;
+# a source removed here is disabled (its history is kept).
+#
+# kind      — collector: github_trending | github_search | hn | reddit | rss | telegram
+# platform  — where it is from (shown to the model): github | hn | reddit | press | blog | telegram | mastodon | producthunt
+# focused   — true = an OSINT-only source, no keyword pre-filter; false = general source, only OSINT-related items are kept
+# config.standalone — true = an article that links to no repo/site is a story of its own (a technique guide,
+#             an investigation). Reddit and HN threads are always eligible. Other blogs/press only attach as mentions.
+#
+# Every URL below answered with fresh items on 2026-11-01 (Reddit: the same collector works from GitHub Actions
+# in vibe-radar; a home IP gets 403/429 from Reddit). Not collected (no free, stable API): X/Twitter, Discord,
+# YouTube view counts.
+# Dropped after checking: gijn.org, trace-labs.com, hackers-arise.com (403), osintcurio.us, osintcombine.com (no feed),
+# infosec.exchange tag feeds (empty to anonymous readers), sector035.nl (no posts since 2024),
+# maltego.com (4 MB feed), restofworld.org (malformed XML).
+
+sources:
+  # ── GitHub: the earliest and best-measured signal for tools ───────────────────────────
+  - { key: gh-trending-daily, name: GitHub Trending (daily), kind: github_trending, platform: github, url: "https://github.com/trending?since=daily" }
+  - { key: gh-trending-weekly, name: GitHub Trending (weekly), kind: github_trending, platform: github, url: "https://github.com/trending?since=weekly" }
+  - { key: gh-trending-python-daily, name: GitHub Trending Python (daily), kind: github_trending, platform: github, url: "https://github.com/trending/python?since=daily" }
+  - { key: gh-trending-go-daily, name: GitHub Trending Go (daily), kind: github_trending, platform: github, url: "https://github.com/trending/go?since=daily" }
+  # Young repositories by stars, per OSINT topic (Search API; created within GITHUB_YOUNG_DAYS, ≥ GITHUB_MIN_STARS).
+  - { key: gh-young-osint, name: GitHub young repos · topic:osint, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", focused: true, config: { query: "topic:osint" } }
+  - { key: gh-young-osint-text, name: GitHub young repos · «osint» in name/description, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", focused: true, config: { query: "osint in:name,description" } }
+  - { key: gh-young-recon, name: GitHub young repos · topic:reconnaissance, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", focused: true, config: { query: "topic:reconnaissance" } }
+  - { key: gh-young-geoint, name: GitHub young repos · geolocation, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", config: { query: "geolocation in:name,description" } }
+  - { key: gh-young-threatintel, name: GitHub young repos · topic:threat-intelligence, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", focused: true, config: { query: "topic:threat-intelligence" } }
+  - { key: gh-young-socmint, name: GitHub young repos · topic:socmint, kind: github_search, platform: github, url: "https://api.github.com/search/repositories", focused: true, config: { query: "topic:socmint" } }
+
+  # New releases of established tools (a release page is a sighting of the repo itself).
+  - { key: rel-sherlock, name: Sherlock releases, kind: rss, platform: github, url: "https://github.com/sherlock-project/sherlock/releases.atom", focused: true }
+  - { key: rel-maigret, name: Maigret releases, kind: rss, platform: github, url: "https://github.com/soxoj/maigret/releases.atom", focused: true }
+  - { key: rel-theharvester, name: theHarvester releases, kind: rss, platform: github, url: "https://github.com/laramies/theHarvester/releases.atom", focused: true }
+  - { key: rel-amass, name: OWASP Amass releases, kind: rss, platform: github, url: "https://github.com/owasp-amass/amass/releases.atom", focused: true }
+  - { key: rel-subfinder, name: subfinder releases, kind: rss, platform: github, url: "https://github.com/projectdiscovery/subfinder/releases.atom", focused: true }
+  - { key: rel-osintgram, name: Osintgram releases, kind: rss, platform: github, url: "https://github.com/Datalux/Osintgram/releases.atom", focused: true }
+  - { key: rel-auto-archiver, name: Bellingcat auto-archiver releases, kind: rss, platform: github, url: "https://github.com/bellingcat/auto-archiver/releases.atom", focused: true }
+  - { key: rel-tg-phone-checker, name: Bellingcat telegram-phone-number-checker releases, kind: rss, platform: github, url: "https://github.com/bellingcat/telegram-phone-number-checker/releases.atom", focused: true }
+  - { key: rel-octosuite, name: Bellingcat octosuite releases, kind: rss, platform: github, url: "https://github.com/bellingcat/octosuite/releases.atom", focused: true }
+  - { key: rel-opencti, name: OpenCTI releases, kind: rss, platform: github, url: "https://github.com/opencti-platform/opencti/releases.atom", focused: true }
+  - { key: rel-intelowl, name: IntelOwl releases, kind: rss, platform: github, url: "https://github.com/intelowlproject/IntelOwl/releases.atom", focused: true }
+  - { key: rel-robin, name: Robin (AI dark-web OSINT) releases, kind: rss, platform: github, url: "https://github.com/apurvsinghgautam/robin/releases.atom", focused: true }
+  # Curated tool lists: the list repo itself is tracked (its commits and star growth show what the community collects).
+  - { key: list-awesome-osint, name: awesome-osint commits, kind: rss, platform: github, url: "https://github.com/jivoi/awesome-osint/commits/master.atom", focused: true }
+  - { key: list-whatsmyname, name: WhatsMyName commits, kind: rss, platform: github, url: "https://github.com/WebBreacher/WhatsMyName/commits/main.atom", focused: true }
+  - { key: list-osint-framework, name: OSINT Framework commits, kind: rss, platform: github, url: "https://github.com/lockfale/OSINT-Framework/commits/master.atom", focused: true }
+  - { key: list-cipher387, name: cipher387 OSINT tool collection commits, kind: rss, platform: github, url: "https://github.com/cipher387/osint_stuff_tool_collection/commits/main.atom", focused: true }
+  - { key: list-awesome-osint-everything, name: Awesome-OSINT-For-Everything commits, kind: rss, platform: github, url: "https://github.com/Astrosp/Awesome-OSINT-For-Everything/commits/main.atom", focused: true }
+
+  # ── Hacker News (Algolia API: points + comments) ───────────────────────────────────────
+  - { key: hn-show, name: Show HN, kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?tags=show_hn", config: { min_points: 10 } }
+  - { key: hn-front, name: HN front page, kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?tags=front_page", config: { min_points: 50 } }
+  - { key: hn-q-osint, name: HN search «osint», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=osint&tags=story", focused: true, config: { min_points: 5 } }
+  - { key: hn-q-geolocation, name: HN search «geolocation», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=geolocation&tags=story", config: { min_points: 10 } }
+  - { key: hn-q-bellingcat, name: HN search «bellingcat», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=bellingcat&tags=story", focused: true, config: { min_points: 5 } }
+  - { key: hn-q-satellite, name: HN search «satellite imagery», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=satellite%20imagery&tags=story", config: { min_points: 10 } }
+  - { key: hn-q-tracking, name: HN search «flight tracking», kind: hn, platform: hn, url: "https://hn.algolia.com/api/v1/search?query=flight%20tracking&tags=story", config: { min_points: 10 } }
+
+  # ── Reddit (top of the day; JSON with upvotes, RSS fallback; one request per 7 s) ──────
+  - { key: r-osint, name: r/OSINT, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/OSINT/top.json?t=day&limit=30", focused: true }
+  - { key: r-osinttools, name: r/osinttools, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/osinttools/top.json?t=day&limit=30", focused: true }
+  - { key: r-tracelabs, name: r/TraceLabs, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/TraceLabs/top.json?t=day&limit=30", focused: true }
+  - { key: r-geoint, name: r/GEOINT, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/GEOINT/top.json?t=day&limit=30", focused: true }
+  - { key: r-threatintel, name: r/threatintel, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/threatintel/top.json?t=day&limit=30", focused: true }
+  - { key: r-netsec, name: r/netsec, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/netsec/top.json?t=day&limit=30" }
+  - { key: r-cybersecurity, name: r/cybersecurity, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/cybersecurity/top.json?t=day&limit=30" }
+  - { key: r-privacy, name: r/privacy, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/privacy/top.json?t=day&limit=30" }
+  - { key: r-opsec, name: r/opsec, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/opsec/top.json?t=day&limit=30" }
+  - { key: r-adsb, name: r/ADSB, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/ADSB/top.json?t=day&limit=30" }
+  - { key: r-rtlsdr, name: r/RTLSDR, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/RTLSDR/top.json?t=day&limit=30" }
+  - { key: r-geoguessr, name: r/geoguessr, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/geoguessr/top.json?t=day&limit=30" }
+  - { key: r-rbi, name: r/RBI, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/RBI/top.json?t=day&limit=30" }
+  - { key: r-datahoarder, name: r/DataHoarder, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/DataHoarder/top.json?t=day&limit=30" }
+
+  # ── OSINT guides and investigations (stories of their own) ─────────────────────────────
+  - { key: bellingcat, name: Bellingcat, kind: rss, platform: blog, url: "https://www.bellingcat.com/feed/", focused: true, config: { standalone: true } }
+  - { key: bellingcat-resources, name: Bellingcat — Resources (guides), kind: rss, platform: blog, url: "https://www.bellingcat.com/category/resources/feed/", focused: true, config: { standalone: true } }
+  - { key: inteltechniques, name: IntelTechniques (Michael Bazzell), kind: rss, platform: blog, url: "https://inteltechniques.com/blog/feed/", focused: true, config: { standalone: true } }
+  - { key: osintteam, name: OSINT Team, kind: rss, platform: blog, url: "https://osintteam.blog/feed", focused: true, config: { standalone: true } }
+  - { key: secjuice-osint, name: Secjuice — OSINT, kind: rss, platform: blog, url: "https://www.secjuice.com/tag/osint/rss/", focused: true, config: { standalone: true } }
+  - { key: osintme, name: OSINTme, kind: rss, platform: blog, url: "https://www.osintme.com/index.php/feed/", focused: true, config: { standalone: true } }
+  - { key: offensiveosint, name: Offensive OSINT, kind: rss, platform: blog, url: "https://www.offensiveosint.io/rss/", focused: true, config: { standalone: true } }
+  - { key: aware-online, name: Aware Online, kind: rss, platform: blog, url: "https://www.aware-online.com/en/feed/", focused: true, config: { standalone: true } }
+  - { key: nixintel, name: Nixintel, kind: rss, platform: blog, url: "https://nixintel.info/feed/", focused: true, config: { standalone: true } }
+  - { key: hatless1der, name: Hatless1der, kind: rss, platform: blog, url: "https://hatless1der.com/feed/", focused: true, config: { standalone: true } }
+  - { key: unishka, name: Unishka Research (Substack), kind: rss, platform: blog, url: "https://unishka.substack.com/feed", focused: true, config: { standalone: true } }
+  - { key: sociallinks, name: Social Links blog, kind: rss, platform: blog, url: "https://blog.sociallinks.io/rss/", focused: true, config: { standalone: true } }
+  - { key: skopenow, name: Skopenow news, kind: rss, platform: blog, url: "https://www.skopenow.com/news/rss.xml", focused: true }
+  - { key: medium-osint, name: "Medium #osint", kind: rss, platform: blog, url: "https://medium.com/feed/tag/osint", focused: true, config: { standalone: true } }
+  - { key: medium-osint-tools, name: "Medium #osint-tools", kind: rss, platform: blog, url: "https://medium.com/feed/tag/osint-tools", focused: true, config: { standalone: true } }
+  - { key: medium-osint-investigations, name: "Medium #osint-investigations", kind: rss, platform: blog, url: "https://medium.com/feed/tag/osint-investigations", focused: true, config: { standalone: true } }
+  - { key: medium-open-source-intelligence, name: "Medium #open-source-intelligence", kind: rss, platform: blog, url: "https://medium.com/feed/tag/open-source-intelligence", focused: true, config: { standalone: true } }
+  - { key: medium-geoint, name: "Medium #geoint", kind: rss, platform: blog, url: "https://medium.com/feed/tag/geoint", focused: true, config: { standalone: true } }
+  - { key: medium-socmint, name: "Medium #socmint", kind: rss, platform: blog, url: "https://medium.com/feed/tag/socmint", focused: true, config: { standalone: true } }
+  - { key: medium-geolocation, name: "Medium #geolocation", kind: rss, platform: blog, url: "https://medium.com/feed/tag/geolocation", config: { standalone: true } }
+  - { key: medium-cti, name: "Medium #cyber-threat-intelligence", kind: rss, platform: blog, url: "https://medium.com/feed/tag/cyber-threat-intelligence", config: { standalone: true } }
+  - { key: devto-osint, name: "dev.to #osint", kind: rss, platform: blog, url: "https://dev.to/feed/tag/osint", focused: true, config: { standalone: true } }
+  - { key: devto-recon, name: "dev.to #reconnaissance", kind: rss, platform: blog, url: "https://dev.to/feed/tag/reconnaissance", config: { standalone: true } }
+  - { key: devto-threatintel, name: "dev.to #threatintelligence", kind: rss, platform: blog, url: "https://dev.to/feed/tag/threatintelligence", config: { standalone: true } }
+  - { key: habr-osint, name: Хабр — поиск «OSINT», kind: rss, platform: blog, url: "https://habr.com/ru/rss/search/?q=osint&target_type=posts&order=date", focused: true, config: { standalone: true } }
+
+  # ── Investigative newsrooms and disinformation research (filtered unless focused; mentions) ──
+  - { key: dfrlab, name: DFRLab, kind: rss, platform: press, url: "https://www.dfrlab.org/feed/", focused: true }
+  - { key: citizenlab, name: Citizen Lab, kind: rss, platform: press, url: "https://citizenlab.ca/feed/", focused: true }
+  - { key: icij, name: ICIJ, kind: rss, platform: press, url: "https://www.icij.org/feed/" }
+  - { key: lighthouse, name: Lighthouse Reports, kind: rss, platform: press, url: "https://www.lighthousereports.com/feed/" }
+  - { key: propublica, name: ProPublica, kind: rss, platform: press, url: "https://www.propublica.org/feeds/propublica/main" }
+  - { key: codastory, name: Coda Story, kind: rss, platform: press, url: "https://www.codastory.com/feed/" }
+  - { key: disinfo-eu, name: EU DisinfoLab, kind: rss, platform: press, url: "https://www.disinfo.eu/feed/", focused: true }
+  - { key: euvsdisinfo, name: EUvsDisinfo, kind: rss, platform: press, url: "https://euvsdisinfo.eu/feed/" }
+  - { key: theins, name: The Insider, kind: rss, platform: press, url: "https://theins.ru/feed" }
+  - { key: eff, name: EFF updates, kind: rss, platform: press, url: "https://www.eff.org/rss/updates.xml" }
+  - { key: 404media, name: 404 Media, kind: rss, platform: press, url: "https://www.404media.co/rss/" }
+  - { key: techdirt, name: Techdirt, kind: rss, platform: press, url: "https://www.techdirt.com/feed/" }
+
+  # ── Security press (filtered; "went mainstream" signal and context) ────────────────────
+  - { key: krebs, name: Krebs on Security, kind: rss, platform: press, url: "https://krebsonsecurity.com/feed/" }
+  - { key: therecord, name: The Record, kind: rss, platform: press, url: "https://therecord.media/feed" }
+  - { key: bleepingcomputer, name: BleepingComputer, kind: rss, platform: press, url: "https://www.bleepingcomputer.com/feed/" }
+  - { key: thehackernews, name: The Hacker News, kind: rss, platform: press, url: "https://feeds.feedburner.com/TheHackersNews" }
+  - { key: wired-security, name: Wired Security, kind: rss, platform: press, url: "https://www.wired.com/feed/category/security/latest/rss" }
+  - { key: techcrunch-security, name: TechCrunch Security, kind: rss, platform: press, url: "https://techcrunch.com/category/security/feed/" }
+  - { key: ars-security, name: Ars Technica Security, kind: rss, platform: press, url: "https://arstechnica.com/security/feed/" }
+  - { key: schneier, name: Schneier on Security, kind: rss, platform: press, url: "https://www.schneier.com/feed/atom/" }
+  - { key: darkreading, name: Dark Reading, kind: rss, platform: press, url: "https://www.darkreading.com/rss.xml" }
+  - { key: cyberscoop, name: CyberScoop, kind: rss, platform: press, url: "https://cyberscoop.com/feed/" }
+  - { key: theverge, name: The Verge, kind: rss, platform: press, url: "https://www.theverge.com/rss/index.xml" }
+  - { key: recordedfuture, name: Recorded Future, kind: rss, platform: press, url: "https://www.recordedfuture.com/feed" }
+  - { key: unit42, name: Unit 42, kind: rss, platform: press, url: "https://unit42.paloaltonetworks.com/feed/" }
+  - { key: talos, name: Cisco Talos, kind: rss, platform: press, url: "https://blog.talosintelligence.com/rss/" }
+  - { key: securelist, name: Securelist, kind: rss, platform: press, url: "https://securelist.com/feed/" }
+  - { key: welivesecurity, name: WeLiveSecurity, kind: rss, platform: press, url: "https://www.welivesecurity.com/en/rss/feed/" }
+  - { key: malwarebytes, name: Malwarebytes Labs, kind: rss, platform: press, url: "https://www.malwarebytes.com/blog/feed/index.xml" }
+  - { key: sans-isc, name: SANS ISC, kind: rss, platform: press, url: "https://isc.sans.edu/rssfeed_full.xml" }
+  - { key: lobsters-security, name: "Lobsters #security", kind: rss, platform: press, url: "https://lobste.rs/t/security.rss" }
+  - { key: lobsters-privacy, name: "Lobsters #privacy", kind: rss, platform: press, url: "https://lobste.rs/t/privacy.rss" }
+  # Russian-language security press
+  - { key: habr-infosec, name: Хабр — Информационная безопасность, kind: rss, platform: press, url: "https://habr.com/ru/rss/hubs/infosecurity/articles/" }
+  - { key: xakep, name: Хакер, kind: rss, platform: press, url: "https://xakep.ru/feed/" }
+  - { key: anti-malware, name: Anti-Malware.ru, kind: rss, platform: press, url: "https://www.anti-malware.ru/news/feed" }
+
+  # ── Mastodon tag feeds (OSINT community chatter; mentions) ─────────────────────────────
+  - { key: masto-social-osint, name: "mastodon.social #osint", kind: rss, platform: mastodon, url: "https://mastodon.social/tags/osint.rss", focused: true }
+  - { key: masto-journa-osint, name: "journa.host #osint", kind: rss, platform: mastodon, url: "https://journa.host/tags/osint.rss", focused: true }
+  - { key: masto-vivaldi-osint, name: "social.vivaldi.net #osint", kind: rss, platform: mastodon, url: "https://social.vivaldi.net/tags/osint.rss", focused: true }
+  - { key: masto-hachyderm-osint, name: "hachyderm.io #osint", kind: rss, platform: mastodon, url: "https://hachyderm.io/tags/osint.rss", focused: true }
+  - { key: masto-social-geolocation, name: "mastodon.social #geolocation", kind: rss, platform: mastodon, url: "https://mastodon.social/tags/geolocation.rss" }
+  - { key: masto-social-bellingcat, name: "mastodon.social #bellingcat", kind: rss, platform: mastodon, url: "https://mastodon.social/tags/bellingcat.rss", focused: true }
+
+  # ── Telegram channels (public web preview t.me/s/<name>; a post with one repo link is a sighting of it) ──
+  - { key: tg-cybdetective, name: Cyber Detective, kind: telegram, platform: telegram, url: "https://t.me/cybdetective", focused: true }
+  - { key: tg-russian-osint, name: Russian OSINT, kind: telegram, platform: telegram, url: "https://t.me/Russian_OSINT" }
+  - { key: tg-osint-mindset, name: OSINT mindset, kind: telegram, platform: telegram, url: "https://t.me/osint_mindset", focused: true }
+  - { key: tg-osintru, name: OSINT (osintru), kind: telegram, platform: telegram, url: "https://t.me/osintru", focused: true }
+  - { key: tg-irozysk, name: Интернет-Розыск, kind: telegram, platform: telegram, url: "https://t.me/irozysk", focused: true }
+  - { key: tg-forensictools, name: Investigation & Forensic TOOLS, kind: telegram, platform: telegram, url: "https://t.me/forensictools", focused: true }
+  - { key: tg-tomhunter, name: T.Hunter, kind: telegram, platform: telegram, url: "https://t.me/tomhunter" }
+  - { key: tg-secator, name: SecAtor, kind: telegram, platform: telegram, url: "https://t.me/true_secator" }
+  - { key: tg-poxek, name: Похек, kind: telegram, platform: telegram, url: "https://t.me/poxek" }
+  - { key: tg-seclab, name: SecurityLab.ru, kind: telegram, platform: telegram, url: "https://t.me/SecLabNews" }
+  - { key: tg-xakep, name: Хакер, kind: telegram, platform: telegram, url: "https://t.me/xakep_ru" }
+  - { key: tg-codeby, name: Codeby, kind: telegram, platform: telegram, url: "https://t.me/codeby_sec" }
+  - { key: tg-infosec, name: infosec, kind: telegram, platform: telegram, url: "https://t.me/infosecurity" }
+
+  # ── Product Hunt (filtered: an OSINT-related launch now and then) ──────────────────────
+  - { key: producthunt, name: Product Hunt, kind: rss, platform: producthunt, url: "https://www.producthunt.com/feed" }
