@@ -47,6 +47,8 @@ const schema = z.object({
   LLM_MIN_INTERVAL_MS: int(4500),
   LLM_MAX_CALLS_PER_RUN: int(25),
   LLM_MAX_CALLS_PER_DAY: int(400),
+  // A model that has not answered in this time is dropped for the rest of the run (next one in the chain is used).
+  LLM_TIMEOUT_MS: int(60_000),
 
   // --- Collection
   // GitHub token raises the search/API limits (Actions passes its own GITHUB_TOKEN automatically).

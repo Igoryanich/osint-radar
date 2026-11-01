@@ -119,7 +119,8 @@ export async function collectAll(db: Db, cfg: Config, only: string[] = []) {
   return stats;
 }
 
-const HOST_PAUSE_MS: Record<string, number> = { "www.reddit.com": 7000, "reddit.com": 7000 };
+// 7 s still drew 429 for 10 of 14 subreddits from Actions (2026-11-01).
+const HOST_PAUSE_MS: Record<string, number> = { "www.reddit.com": 12000, "reddit.com": 12000 };
 
 function hostOf(url: string): string {
   try {

@@ -80,7 +80,7 @@ export class Llm {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(120_000),
+      signal: AbortSignal.timeout(this.cfg.LLM_TIMEOUT_MS),
     });
     const text = await res.text();
     // 402 = prepay credits depleted (or billing not yet synced): treat like an exhausted model.
@@ -158,6 +158,13 @@ ${text}
           }
           if (e instanceof BudgetExhausted) throw e;
           this.record(entry, false);
+          // A model that timed out or is overloaded will most likely do it again this run: move on instead of
+          // spending another LLM_TIMEOUT_MS on it (one slow model once stretched a cycle to 15 minutes).
+          if ((e instanceof Error && e.name === "TimeoutError") || /^Gemini 5\d\d/.test(errMsg(e))) {
+            log.warn("model slow/overloaded, falling back", { model: entry, err: errMsg(e) });
+            this.dead.add(entry);
+            break;
+          }
           if (!(e instanceof SyntaxError)) log.warn("llm call failed", { model: entry, err: errMsg(e) });
         }
       }

@@ -12,7 +12,9 @@
 # YouTube view counts.
 # Dropped after checking: gijn.org, trace-labs.com, hackers-arise.com (403), osintcurio.us, osintcombine.com (no feed),
 # infosec.exchange tag feeds (empty to anonymous readers), sector035.nl (no posts since 2024),
-# maltego.com (4 MB feed), restofworld.org (malformed XML).
+# maltego.com (4 MB feed), restofworld.org (malformed XML), secjuice.com and unishka.substack.com (403 from Actions).
+# Reddit is capped at 8 subreddits: anonymous access draws 429 beyond that (r/netsec, r/opsec, r/RTLSDR, r/geoguessr,
+# r/RBI, r/DataHoarder dropped on 2026-11-01).
 
 sources:
   # ── GitHub: the earliest and best-measured signal for tools ───────────────────────────
@@ -63,28 +65,20 @@ sources:
   - { key: r-tracelabs, name: r/TraceLabs, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/TraceLabs/top.json?t=day&limit=30", focused: true }
   - { key: r-geoint, name: r/GEOINT, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/GEOINT/top.json?t=day&limit=30", focused: true }
   - { key: r-threatintel, name: r/threatintel, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/threatintel/top.json?t=day&limit=30", focused: true }
-  - { key: r-netsec, name: r/netsec, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/netsec/top.json?t=day&limit=30" }
   - { key: r-cybersecurity, name: r/cybersecurity, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/cybersecurity/top.json?t=day&limit=30" }
   - { key: r-privacy, name: r/privacy, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/privacy/top.json?t=day&limit=30" }
-  - { key: r-opsec, name: r/opsec, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/opsec/top.json?t=day&limit=30" }
   - { key: r-adsb, name: r/ADSB, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/ADSB/top.json?t=day&limit=30" }
-  - { key: r-rtlsdr, name: r/RTLSDR, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/RTLSDR/top.json?t=day&limit=30" }
-  - { key: r-geoguessr, name: r/geoguessr, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/geoguessr/top.json?t=day&limit=30" }
-  - { key: r-rbi, name: r/RBI, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/RBI/top.json?t=day&limit=30" }
-  - { key: r-datahoarder, name: r/DataHoarder, kind: reddit, platform: reddit, url: "https://www.reddit.com/r/DataHoarder/top.json?t=day&limit=30" }
 
   # ── OSINT guides and investigations (stories of their own) ─────────────────────────────
   - { key: bellingcat, name: Bellingcat, kind: rss, platform: blog, url: "https://www.bellingcat.com/feed/", focused: true, config: { standalone: true } }
   - { key: bellingcat-resources, name: Bellingcat — Resources (guides), kind: rss, platform: blog, url: "https://www.bellingcat.com/category/resources/feed/", focused: true, config: { standalone: true } }
   - { key: inteltechniques, name: IntelTechniques (Michael Bazzell), kind: rss, platform: blog, url: "https://inteltechniques.com/blog/feed/", focused: true, config: { standalone: true } }
   - { key: osintteam, name: OSINT Team, kind: rss, platform: blog, url: "https://osintteam.blog/feed", focused: true, config: { standalone: true } }
-  - { key: secjuice-osint, name: Secjuice — OSINT, kind: rss, platform: blog, url: "https://www.secjuice.com/tag/osint/rss/", focused: true, config: { standalone: true } }
   - { key: osintme, name: OSINTme, kind: rss, platform: blog, url: "https://www.osintme.com/index.php/feed/", focused: true, config: { standalone: true } }
   - { key: offensiveosint, name: Offensive OSINT, kind: rss, platform: blog, url: "https://www.offensiveosint.io/rss/", focused: true, config: { standalone: true } }
   - { key: aware-online, name: Aware Online, kind: rss, platform: blog, url: "https://www.aware-online.com/en/feed/", focused: true, config: { standalone: true } }
   - { key: nixintel, name: Nixintel, kind: rss, platform: blog, url: "https://nixintel.info/feed/", focused: true, config: { standalone: true } }
   - { key: hatless1der, name: Hatless1der, kind: rss, platform: blog, url: "https://hatless1der.com/feed/", focused: true, config: { standalone: true } }
-  - { key: unishka, name: Unishka Research (Substack), kind: rss, platform: blog, url: "https://unishka.substack.com/feed", focused: true, config: { standalone: true } }
   - { key: sociallinks, name: Social Links blog, kind: rss, platform: blog, url: "https://blog.sociallinks.io/rss/", focused: true, config: { standalone: true } }
   - { key: skopenow, name: Skopenow news, kind: rss, platform: blog, url: "https://www.skopenow.com/news/rss.xml", focused: true }
   - { key: medium-osint, name: "Medium #osint", kind: rss, platform: blog, url: "https://medium.com/feed/tag/osint", focused: true, config: { standalone: true } }

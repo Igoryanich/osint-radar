@@ -54,7 +54,8 @@ export type Candidate = z.infer<typeof candidateSchema>;
 
 const scanSchema = z.object({ candidates: z.array(candidateSchema) });
 
-const BATCH = 12;
+// Smaller batches = shorter answers: a 12-project batch took the editor model over 2 minutes (2026-11-01).
+const BATCH = 8;
 
 /** Ask the model to judge the current candidates; store its verdict on each project. */
 export async function scan(db: Db, llm: Llm, cfg: Config) {
