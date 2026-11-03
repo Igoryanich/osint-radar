@@ -213,6 +213,26 @@ test("digest: built once a day from scanned projects", async () => {
   assert.equal(db.get<{ n: number }>("SELECT count(*) AS n FROM publications WHERE kind = 'digest'")!.n, 1);
 });
 
+test("digest: a missed evening is caught up the next morning, once", async () => {
+  const { db } = setup();
+  applyScan(db, buildCandidates(db, cfg), [candidate({ status: "digest_only", hype_score: 5 })]);
+  const text = `<b>📡 Что двигало OSINT сегодня</b>
+
+1. <b>God's Eye View</b> — шпионский спутник в браузере на открытых данных
+🔥 3 000 звёзд на GitHub меньше чем за сутки
+<a href="https://github.com/bilawalsidhu/gods-eye-view">→ ссылка</a>`;
+  const at = (iso: string) => new Date(iso); // Helsinki is UTC+2 in November
+  db.kvSet("digest:last:dry-run", "2026-11-01");
+  assert.deepEqual(await maybeDigest(db, stubLlm([text]), cfg, false, at("2026-11-02T16:00:00Z")), { skipped: "not yet" }, "18:00, evening not reached");
+  // No run between 21:00 and midnight on the 2nd; the next one is at 03:30 on the 3rd.
+  const caught = await maybeDigest(db, stubLlm([text]), cfg, false, at("2026-11-03T01:30:00Z"));
+  assert.equal((caught as { queued?: boolean }).queued, true, JSON.stringify(caught));
+  assert.equal(db.kvGet("digest:last:dry-run"), "2026-11-02");
+  assert.deepEqual(await maybeDigest(db, stubLlm([text]), cfg, false, at("2026-11-03T02:30:00Z")), { skipped: "not yet" }, "caught up once");
+  db.kvSet("digest:last:dry-run", "2026-11-01");
+  assert.deepEqual(await maybeDigest(db, stubLlm([text]), cfg, false, at("2026-11-03T11:00:00Z")), { skipped: "not yet" }, "13:00 is too late to catch up");
+});
+
 test("system prompt: every variable is filled", () => {
   for (const mode of ["scan", "single_post", "daily_digest"] as const) {
     const p = systemPrompt(cfg, mode);

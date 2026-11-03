@@ -27,11 +27,18 @@ export function digestSelection(db: Db, cfg: Config) {
 }
 
 /** Once a day after DIGEST_HOUR_LOCAL: build and queue "what moved in OSINT today". */
-export async function maybeDigest(db: Db, llm: Llm, cfg: Config, force = false) {
-  const day = localDate(cfg.TIMEZONE);
-  if (!force && localHour(cfg.TIMEZONE) < cfg.DIGEST_HOUR_LOCAL) return { skipped: "not yet" };
+export async function maybeDigest(db: Db, llm: Llm, cfg: Config, force = false, now = new Date()) {
   // Tracked per mode: a test-mode digest must not stop the real one on the day publishing is switched on.
   const doneKey = `digest:last:${cfg.DRY_RUN ? "dry-run" : "live"}`;
+  let day = localDate(cfg.TIMEZONE, now);
+  const hour = localHour(cfg.TIMEZONE, now);
+  if (!force && hour < cfg.DIGEST_HOUR_LOCAL) {
+    // No run reached the evening window yesterday (GitHub skips scheduled runs): send it in the morning instead.
+    const yesterday = localDate(cfg.TIMEZONE, new Date(now.getTime() - 86400_000));
+    const last = db.kvGet(doneKey);
+    if (!(hour < cfg.DIGEST_CATCHUP_UNTIL_HOUR && last && last < yesterday)) return { skipped: "not yet" };
+    day = yesterday;
+  }
   if (!force && db.kvGet(doneKey) === day) return { skipped: "already done today" };
   const { main, radar } = digestSelection(db, cfg);
   if (main.length < cfg.DIGEST_MIN_ITEMS) {

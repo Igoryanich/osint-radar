@@ -41,6 +41,13 @@ Differences from vibe-radar:
   kept: personal data of private individuals is not reprinted into post text — the post links to the source.
 - Telegram delivery: `sending` is committed before the request; ambiguous outcomes become `uncertain`, never auto-retried.
 
+## Scheduling
+
+GitHub fired the hourly schedule only every 7–8 h (2026-11-01…03), so `radar.yml` runs one job for ~5.5 h with a
+cycle every hour (state saved after each, `scripts/save-state.sh`); queued triggers start the next job. A digest
+missed in the evening is sent the next morning until `DIGEST_CATCHUP_UNTIL_HOUR`. Anything from a `focused` source
+gets one scan even without measured velocity (`candidates.ts`, `curated`). The repo must stay public (minutes).
+
 ## Commands
 
 | Command | What |

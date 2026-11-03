@@ -154,8 +154,14 @@ export function buildCandidates(db: Db, cfg: Config): ProjectInput[] {
     if (!stale && p.last_scan_at && p.last_scan_at >= hoursAgo(cfg.RESCAN_HOURS) && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.RESCAN_GROWTH)
       continue;
     if (!stale && p.status === "skip" && growthRatio(json(p.last_scan_metrics, {}), headline) < cfg.UPDATE_GROWTH) continue;
-    // A fresh guide or investigation from a curated OSINT source has no counters but deserves a look.
-    const pre = preScore(v) + (story && items.some((i) => i.source === "blog") ? 1 : 0);
+    // Anything an OSINT-only source brought in (a topic:osint repo, a release of a known tool, an r/OSINT thread,
+    // a guide, a tool picked by an OSINT Telegram channel) gets one look by the model even without counters:
+    // the velocity-only gate kept 92 of 169 such projects from ever being judged (2026-11-03).
+    const curated = !p.last_scan_at && !!db.get(
+      "SELECT 1 FROM items i JOIN sources s ON s.id = i.source_id WHERE i.project_key = ? AND s.focused = 1 AND i.last_seen >= ? LIMIT 1",
+      p.key, since,
+    );
+    const pre = preScore(v) + (curated ? 1 : 0);
     if (pre < 1) continue;
     out.push({
       project_key: p.key,

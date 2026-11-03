@@ -1,22 +1,28 @@
 name: radar
 
-# OSINT Radar: hourly full cycle (collect → measure → model scan → posts → digest after 21:00 → publish).
+# OSINT Radar: collect → measure → model scan → posts → digest after 21:00 → publish, once an hour.
 # Hourly matters: 24h/72h velocity is computed from our own snapshots of star/point/upvote counters.
 # State (SQLite) lives on the `state` branch as a single force-pushed commit, so history never grows.
-# Keep the repo public: Actions minutes are then free and unlimited (a private repo shares 2000 min/month
-# with your other private repos).
+#
+# GitHub ran the hourly schedule only every 7–8 hours for this repo (2026-11-01…03): no evening run → no digest,
+# few posts. So one job now keeps going for ~5.5 hours, running a cycle every hour and saving state after each.
+# Schedule triggers that arrive meanwhile wait in the concurrency queue, so the next job starts as this one ends.
+# Keep the repo public: Actions minutes are then free and unlimited (a job running around the clock would need
+# ~43 000 minutes a month; a private repo gets 2 000).
 #
 # Repository secrets:   GEMINI_API_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL_ID   (optional: GEMINI_PAID_API_KEY)
 # Repository variables: DRY_RUN (default true — set to false to start posting), CHANNEL_NAME,
-#                       PAID_DAILY_BUDGET_EUR, MAX_POSTS_PER_DAY
+#                       PAID_DAILY_BUDGET_EUR, MAX_POSTS_PER_DAY, POST_THRESHOLD, MAX_POSTS_PER_RUN
 
 on:
   schedule:
+    # Two triggers an hour: GitHub drops many scheduled runs; any one that lands queues the next job.
     - cron: "12 * * * *"
+    - cron: "42 * * * *"
   workflow_dispatch:
     inputs:
       task:
-        description: "cycle = the usual hourly run; digest-now = build and send today's digest right away"
+        description: "cycle = the usual run (hourly cycles for ~5.5 h); digest-now = build and send today's digest right away"
         type: choice
         options: [cycle, digest-now]
         default: cycle
@@ -31,7 +37,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 350
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_PAID_API_KEY: ${{ secrets.GEMINI_PAID_API_KEY }}
@@ -40,6 +46,8 @@ jobs:
       TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
       CHANNEL_NAME: ${{ vars.CHANNEL_NAME || '' }}
       MAX_POSTS_PER_DAY: ${{ vars.MAX_POSTS_PER_DAY || '' }}
+      MAX_POSTS_PER_RUN: ${{ vars.MAX_POSTS_PER_RUN || '' }}
+      POST_THRESHOLD: ${{ vars.POST_THRESHOLD || '' }}
       DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
       # The workflow's own token: higher GitHub Search/API limits for the collectors.
       GITHUB_TOKEN: ${{ github.token }}
@@ -64,9 +72,21 @@ jobs:
             echo "no state branch yet — starting fresh"
           fi
 
-      - name: Cycle
+      - name: Cycles (hourly, ~5.5 h)
         if: inputs.task != 'digest-now'
-        run: node src/cli.ts cycle
+        run: |
+          deadline=$((SECONDS + 330 * 60))
+          while :; do
+            start=$SECONDS
+            echo "::group::cycle $(date -u +%FT%TZ)"
+            node src/cli.ts cycle || echo "cycle failed (exit $?) — state is still saved, next cycle in an hour"
+            echo "::endgroup::"
+            bash scripts/save-state.sh "${{ github.token }}" "${{ github.repository }}" || echo "state save failed"
+            next=$((start + 3600))
+            # Stop if the next cycle (up to ~25 min) would not finish before the deadline.
+            [ $((next + 25 * 60)) -le $deadline ] || break
+            sleep $((next > SECONDS ? next - SECONDS : 0))
+          done
 
       # A digest sent this way counts as today's: the evening run will not send a second one.
       - name: Digest now
@@ -79,14 +99,4 @@ jobs:
 
       - name: Save state
         if: always()
-        run: |
-          [ -f data/radar.db ] || exit 0
-          tmp=$(mktemp -d)
-          cp data/radar.db "$tmp/"
-          cd "$tmp"
-          git init -q -b state
-          git config user.name "radar-bot"
-          git config user.email "radar-bot@users.noreply.github.com"
-          git add -A
-          git commit -q -m "state $(date -u +%FT%TZ) [skip ci]"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" state
+        run: bash scripts/save-state.sh "${{ github.token }}" "${{ github.repository }}"
